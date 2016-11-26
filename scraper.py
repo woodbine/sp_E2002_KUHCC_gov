@@ -45,9 +45,10 @@ def validateURL(url):
             count += 1
             r = urllib2.urlopen(url)
         sourceFilename = r.headers.get('Content-Disposition')
-
         if sourceFilename:
             ext = os.path.splitext(sourceFilename)[1].replace('"', '').replace(';', '').replace(' ', '')
+        elif 'octet-stream' in r.headers.get('Content-Type') or 'ms-excel' in r.headers.get('Content-Type'):
+            ext = '.csv'
         else:
             ext = os.path.splitext(url)[1]
         validURL = r.getcode() == 200
@@ -102,21 +103,43 @@ links = soup.find_all('div', attrs = {'class':'fileContainer'})
 for link in links:
     url = link.find('a')['href']
     if '.CSV' in url:
-        csvfile_list = link.find('a').text.split('(')[0].split(' ')
-        if len(csvfile_list) == 8:
-            csvMth = csvfile_list[-3][0:3].strip()
-        if len(csvfile_list) == 9:
-            csvMth = csvfile_list[-6][0:3].strip()
-        if len(csvfile_list) == 6:
-            csvMth = csvfile_list[-3][0:3].strip()
-        if len(csvfile_list) == 8:
-            csvYr = csvfile_list[-2].strip()
-        if len(csvfile_list) == 9:
-            csvYr = csvfile_list[-5].strip()
-        if len(csvfile_list) == 6:
-            csvYr = csvfile_list[-2].strip()
+        csvMth = csvYr = ''
+        csvMth = link.find('a').text.split('(')[0].strip().split(' - ')[-1][:3]
+        csvYr = link.find('a').text.split('(')[0].strip()[-4:]
         csvMth = convert_mth_strings(csvMth.replace('-', '').strip().upper()[:3])
         data.append([csvYr, csvMth, url])
+archive_urls = soup.find('h2', text=re.compile('Expenditure from previous years')).find_next('p').find_all('a')
+for archive_url in archive_urls:
+    html = ''
+    try:
+        html = urllib2.urlopen(archive_url['href'])
+    except:
+        pass
+    if html:
+        soup = BeautifulSoup(html, 'lxml')
+        links = soup.find_all('a')
+        for link in links:
+            try:
+                url = link['href']
+                if '.CSV' in url:
+                    csvMth = csvYr = ''
+                    csvMth = link.text.split('(')[0].strip().split(' - ')[-1][:3]
+                    csvYr = link.text.split('(')[0].strip()[-4:]
+                    csvMth = convert_mth_strings(csvMth.replace('-', '').strip().upper()[:3])
+                    if '2012' in link.text:
+                        csvMth = link.text.strip().split(' - ')[0].split(' in ')[-1][:3]
+                        csvYr = link.text.strip().split(' - ')[0].split(' in ')[-1][-4:]
+                        csvMth = convert_mth_strings(csvMth.upper())
+                    data.append([csvYr, csvMth, url])
+                if ('2011' in link.text or '2010' in link.text) and 'csv' in link.text :
+                    csvMth = link.text.strip().split(' - ')[0].split(' in ')[-1][:3]
+                    csvYr = link.text.strip().split(' - ')[0].split(' in ')[-1][-4:]
+                    if '132071.GIF' in link.find_previous('a').img['src']:
+                        continue
+                    csvMth = convert_mth_strings(csvMth.upper())
+                    data.append([csvYr, csvMth, url])
+            except:
+                pass
 
 
 #### STORE DATA 1.0
@@ -140,4 +163,3 @@ if errors > 0:
 
 
 #### EOF
-
