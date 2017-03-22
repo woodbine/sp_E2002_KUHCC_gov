@@ -87,7 +87,7 @@ def convert_mth_strings ( mth_string ):
 #### VARIABLES 1.0
 
 entity_id = "E2002_KUHCC_gov"
-url = "http://www.hullcc.gov.uk/opendata"
+url = "http://www.hullcc.gov.uk/portal/page?_pageid=221%2C653272&_dad=portal&_schema=PORTAL"
 errors = 0
 data = []
 
