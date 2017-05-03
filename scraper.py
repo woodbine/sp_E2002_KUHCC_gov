@@ -47,7 +47,8 @@ def validateURL(url):
         sourceFilename = r.headers.get('Content-Disposition')
         if sourceFilename:
             ext = os.path.splitext(sourceFilename)[1].replace('"', '').replace(';', '').replace(' ', '')
-        elif 'octet-stream' in r.headers.get('Content-Type') or 'ms-excel' in r.headers.get('Content-Type'):
+
+        elif 'octet-stream' in r.headers.get('Content-Type') or 'ms-excel' in r.headers.get('Content-Type') or 'text/html' in r.headers.get('Content-Type'):
             ext = '.csv'
         else:
             ext = os.path.splitext(url)[1]
@@ -87,14 +88,14 @@ def convert_mth_strings ( mth_string ):
 #### VARIABLES 1.0
 
 entity_id = "E2002_KUHCC_gov"
-url = "http://www.hullcc.gov.uk/portal/page?_pageid=221%2C653272&_dad=portal&_schema=PORTAL"
+url = "http://www.hullcc.gov.uk/portal/page-_pageid=221,653272&_dad=portal&_schema=PORTAL"
 errors = 0
 data = []
 
 #### READ HTML 1.0
 
 html = urllib2.urlopen(url)
-soup = BeautifulSoup(html, 'lxml')
+soup = BeautifulSoup(html, "lxml")
 
 
 #### SCRAPE DATA
@@ -108,7 +109,7 @@ for link in links:
         csvYr = link.find('a').text.split('(')[0].strip()[-4:]
         csvMth = convert_mth_strings(csvMth.replace('-', '').strip().upper()[:3])
         data.append([csvYr, csvMth, url])
-archive_urls = soup.find('h2', text=re.compile('Expenditure from previous years')).find_next('p').find_all('a')
+archive_urls = soup.find_all('font', 'inplacedisplayid1siteid0')[1].find_all('a')[:-1]
 for archive_url in archive_urls:
     html = ''
     try:
